@@ -1,11 +1,11 @@
-project(ZLMediaKit)
+project(VideoServer)
 cmake_minimum_required(VERSION 3.1.3)
 #使能c++11
 set(CMAKE_CXX_STANDARD 11)
 #加载自定义模块
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-#set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Release")
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Release")
     message(STATUS "Release版本")
@@ -46,11 +46,11 @@ option(ENABLE_OPENSSL "Enable OpenSSL" true)
 option(ENABLE_MYSQL "Enable MySQL" false)
 option(ENABLE_FAAC "Enable FAAC" false)
 option(ENABLE_X264 "Enable x264" false)
-option(ENABLE_MP4 "Enable MP4" true)
-option(ENABLE_RTPPROXY "Enable RTPPROXY" true)
-option(ENABLE_API "Enable C API SDK" true)
+option(ENABLE_MP4 "Enable MP4" false)
+option(ENABLE_RTPPROXY "Enable RTPPROXY" false)
+option(ENABLE_API "Enable C API SDK" false)
 option(ENABLE_CXX_API "Enable C++ API SDK" false)
-option(ENABLE_TESTS "Enable Tests" true)
+option(ENABLE_TESTS "Enable Tests" false)
 option(ENABLE_SERVER "Enable Server" true)
 
 set(LINK_LIB_LIST zlmediakit zltoolkit)

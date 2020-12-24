@@ -11,19 +11,22 @@
 #ifndef TSMUXER_H
 #define TSMUXER_H
 
+#define ENABLE_HLS 1
+
 #if defined(ENABLE_HLS)
 #include <unordered_map>
+
+#include "Common/MediaSink.h"
+#include "Common/Stamp.h"
 #include "Extension/Frame.h"
 #include "Extension/Track.h"
 #include "Util/File.h"
-#include "Common/MediaSink.h"
-#include "Common/Stamp.h"
 using namespace toolkit;
 namespace mediakit {
 
 //该类用于产生MPEG-TS
 class TsMuxer : public MediaSinkInterface {
-public:
+   public:
     TsMuxer();
     virtual ~TsMuxer();
 
@@ -42,7 +45,7 @@ public:
      */
     void inputFrame(const Frame::Ptr &frame) override;
 
-protected:
+   protected:
     /**
      * 输出mpegts数据回调
      * @param packet mpegts数据
@@ -50,15 +53,15 @@ protected:
      * @param timestamp 时间戳，单位毫秒
      * @param is_idr_fast_packet 是否为关键帧的第一个TS包，用于确保ts切片第一帧为关键帧
      */
-    virtual void onTs(const void *packet, int bytes,uint32_t timestamp,bool is_idr_fast_packet) = 0;
+    virtual void onTs(const void *packet, int bytes, uint32_t timestamp, bool is_idr_fast_packet) = 0;
 
-private:
+   private:
     void init();
     void uninit();
     //音视频时间戳同步用
     void stampSync();
 
-private:
+   private:
     void *_context = nullptr;
     char _tsbuf[188];
     uint32_t _timestamp = 0;
@@ -72,7 +75,7 @@ private:
     bool _have_video = false;
 };
 
-}//namespace mediakit
+}  //namespace mediakit
 
 #else
 
@@ -80,18 +83,18 @@ private:
 
 namespace mediakit {
 class TsMuxer : public MediaSinkInterface {
-public:
+   public:
     TsMuxer() {}
     ~TsMuxer() override {}
     void addTrack(const Track::Ptr &track) override {}
     void resetTracks() override {}
     void inputFrame(const Frame::Ptr &frame) override {}
 
-protected:
-    virtual void onTs(const void *packet, int bytes,uint32_t timestamp,bool is_idr_fast_packet) = 0;
+   protected:
+    virtual void onTs(const void *packet, int bytes, uint32_t timestamp, bool is_idr_fast_packet) = 0;
 };
-}//namespace mediakit
+}  //namespace mediakit
 
-#endif// defined(ENABLE_HLS)
+#endif  // defined(ENABLE_HLS)
 
-#endif //TSMUXER_H
+#endif  //TSMUXER_H

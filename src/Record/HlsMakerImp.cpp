@@ -8,9 +8,12 @@
  * may be found in the AUTHORS file in the root of the source tree.
  */
 
-#include <ctime>
-#include <sys/stat.h>
 #include "HlsMakerImp.h"
+
+#include <sys/stat.h>
+
+#include <ctime>
+
 #include "Util/util.h"
 #include "Util/uv_errno.h"
 
@@ -41,28 +44,21 @@ HlsMakerImp::~HlsMakerImp() {
 void HlsMakerImp::clearCache() {
     //录制完了
     flushLastSegment(true);
-    if (isLive()) {
-        //hls直播才删除文件
-        clear();
-        _file = nullptr;
-        _segment_file_paths.clear();
-        File::delete_file(_path_prefix.data());
-    }
 }
 
 string HlsMakerImp::onOpenSegment(int index) {
-    string segment_name, segment_path;
+    string segment_name, segment_path, segment_index_path;
     {
         auto strDate = getTimeStr("%Y-%m-%d");
-        auto strHour = getTimeStr("%H");
-        auto strTime = getTimeStr("%M-%S");
-        segment_name = StrPrinter << strDate + "/" + strHour + "/" + strTime << "_" << index << ".ts";
+        auto strHour = getTimeStr("%H-%M-%S");
+        segment_name = StrPrinter << strDate + "/" + strHour << ".ts";
         segment_path = _path_prefix + "/" + segment_name;
-        if (isLive()) {
-            _segment_file_paths.emplace(index, segment_path);
-        }
+        segment_index_path = segment_path + ".idx";
     }
     _file = makeFile(segment_path, true);
+    InfoL << "recording segment file created:" << segment_path;
+    _seg_index_file = makeFile(segment_index_path, false);
+    InfoL << "recording segment index created:" << segment_index_path;
 
     //保存本切片的元数据
     _info.start_time = ::time(NULL);
@@ -73,6 +69,11 @@ string HlsMakerImp::onOpenSegment(int index) {
     if (!_file) {
         WarnL << "create file failed," << segment_path << " " << get_uv_errmsg();
     }
+
+    if (!_seg_index_file) {
+        WarnL << "create file failed," << segment_index_path << " " << get_uv_errmsg();
+    }
+
     if (_params.empty()) {
         return segment_name;
     }
@@ -94,6 +95,16 @@ void HlsMakerImp::onWriteSegment(const char *data, int len) {
     }
     if (_media_src) {
         _media_src->onSegmentSize(len);
+    }
+}
+
+void HlsMakerImp::onWriteSegIndex(const char *data, int len) {
+    if (_seg_index_file) {
+        fwrite(data, len, 1, _seg_index_file.get());
+        fflush(_seg_index_file.get());
+    } else {
+        WarnL << "write segment index file failed"
+              << " " << get_uv_errmsg();
     }
 }
 
@@ -148,4 +159,4 @@ HlsMediaSource::Ptr HlsMakerImp::getMediaSource() const {
     return _media_src;
 }
 
-}//namespace mediakit
+}  //namespace mediakit

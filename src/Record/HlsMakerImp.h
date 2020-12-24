@@ -11,9 +11,11 @@
 #ifndef HLSMAKERIMP_H
 #define HLSMAKERIMP_H
 
+#include <stdlib.h>
+
 #include <memory>
 #include <string>
-#include <stdlib.h>
+
 #include "HlsMaker.h"
 #include "HlsMediaSource.h"
 
@@ -21,11 +23,11 @@ using namespace std;
 
 namespace mediakit {
 
-class HlsMakerImp : public HlsMaker{
-public:
+class HlsMakerImp : public HlsMaker {
+   public:
     HlsMakerImp(const string &m3u8_file,
                 const string &params,
-                uint32_t bufSize  = 64 * 1024,
+                uint32_t bufSize = 64 * 1024,
                 float seg_duration = 5,
                 uint32_t seg_number = 3);
 
@@ -45,32 +47,34 @@ public:
      */
     HlsMediaSource::Ptr getMediaSource() const;
 
-     /**
+    /**
       * 清空缓存
       */
-     void clearCache();
+    void clearCache();
 
-protected:
-    string onOpenSegment(int index) override ;
+   protected:
+    string onOpenSegment(int index) override;
     void onDelSegment(int index) override;
     void onWriteSegment(const char *data, int len) override;
+    void onWriteSegIndex(const char *data, int len) override;
     void onWriteHls(const char *data, int len) override;
     void onFlushLastSegment(uint32_t duration_ms) override;
 
-private:
-    std::shared_ptr<FILE> makeFile(const string &file,bool setbuf = false);
+   private:
+    std::shared_ptr<FILE> makeFile(const string &file, bool setbuf = false);
 
-private:
+   private:
     int _buf_size;
     string _params;
     string _path_hls;
     string _path_prefix;
     RecordInfo _info;
     std::shared_ptr<FILE> _file;
+    std::shared_ptr<FILE> _seg_index_file;
     std::shared_ptr<char> _file_buf;
     HlsMediaSource::Ptr _media_src;
-    map<int /*index*/,string/*file_path*/> _segment_file_paths;
+    map<int /*index*/, string /*file_path*/> _segment_file_paths;
 };
 
-}//namespace mediakit
-#endif //HLSMAKERIMP_H
+}  //namespace mediakit
+#endif  //HLSMAKERIMP_H

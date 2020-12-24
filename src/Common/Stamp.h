@@ -11,15 +11,16 @@
 #ifndef ZLMEDIAKIT_STAMP_H
 #define ZLMEDIAKIT_STAMP_H
 
-#include <set>
 #include <cstdint>
+#include <set>
+
 #include "Util/TimeTicker.h"
 using namespace toolkit;
 
 namespace mediakit {
 
-class DeltaStamp{
-public:
+class DeltaStamp {
+   public:
     DeltaStamp() = default;
     ~DeltaStamp() = default;
 
@@ -30,14 +31,15 @@ public:
      */
     int64_t deltaStamp(int64_t stamp);
 
-private:
+   private:
     int64_t _last_stamp = 0;
+    int64_t _last_delta_stamp = 0;
 };
 
 //该类解决时间戳回环、回退问题
 //计算相对时间戳或者产生平滑时间戳
-class Stamp : public DeltaStamp{
-public:
+class Stamp : public DeltaStamp {
+   public:
     Stamp() = default;
     ~Stamp() = default;
 
@@ -49,7 +51,7 @@ public:
      * @param pts_out 输出pts
      * @param modifyStamp 是否用系统时间戳覆盖
      */
-    void revise(int64_t dts, int64_t pts, int64_t &dts_out, int64_t &pts_out,bool modifyStamp = false);
+    void revise(int64_t dts, int64_t pts, int64_t &dts_out, int64_t &pts_out, bool modifyStamp = false);
 
     /**
      * 再设置相对时间戳，用于seek用
@@ -61,7 +63,7 @@ public:
      * 获取当前相对时间戳
      * @return
      */
-    int64_t getRelativeStamp() const ;
+    int64_t getRelativeStamp() const;
 
     /**
      * 设置是否为回放模式，回放模式运行时间戳回退
@@ -75,18 +77,19 @@ public:
      */
     void syncTo(Stamp &other);
 
-private:
+   private:
     //主要实现音视频时间戳同步功能
-    void revise_l(int64_t dts, int64_t pts, int64_t &dts_out, int64_t &pts_out,bool modifyStamp = false);
+    void revise_l(int64_t dts, int64_t pts, int64_t &dts_out, int64_t &pts_out, bool modifyStamp = false);
 
     //主要实现获取相对时间戳功能
-    void revise_l2(int64_t dts, int64_t pts, int64_t &dts_out, int64_t &pts_out,bool modifyStamp = false);
+    void revise_l2(int64_t dts, int64_t pts, int64_t &dts_out, int64_t &pts_out, bool modifyStamp = false);
 
-private:
+   private:
     int64_t _relative_stamp = 0;
     int64_t _last_dts_in = 0;
     int64_t _last_dts_out = 0;
     int64_t _last_pts_out = 0;
+    int64_t _last_pts_diff = 0;
     SmoothTicker _ticker;
     bool _playback = false;
     Stamp *_sync_master = nullptr;
@@ -94,16 +97,16 @@ private:
 
 //dts生成器，
 //pts排序后就是dts
-class DtsGenerator{
-public:
+class DtsGenerator {
+   public:
     DtsGenerator() = default;
     ~DtsGenerator() = default;
     bool getDts(uint32_t pts, uint32_t &dts);
 
-private:
+   private:
     bool getDts_l(uint32_t pts, uint32_t &dts);
 
-private:
+   private:
     uint32_t _dts_pts_offset = 0;
     uint32_t _last_dts = 0;
     uint32_t _last_pts = 0;
@@ -114,6 +117,6 @@ private:
     set<uint32_t> _pts_sorter;
 };
 
-}//namespace mediakit
+}  //namespace mediakit
 
-#endif //ZLMEDIAKIT_STAMP_H
+#endif  //ZLMEDIAKIT_STAMP_H

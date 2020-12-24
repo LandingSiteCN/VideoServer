@@ -187,6 +187,7 @@ extern const string kRtspDemand;
 extern const string kRtmpDemand;
 extern const string kTSDemand;
 extern const string kFMP4Demand;
+extern const string kVideoOnly;
 }//namespace General
 
 

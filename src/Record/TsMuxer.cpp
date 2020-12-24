@@ -10,9 +10,10 @@
 
 #if defined(ENABLE_HLS)
 #include "TsMuxer.h"
+
+#include "Extension/H264.h"
 #include "mpeg-ts-proto.h"
 #include "mpeg-ts.h"
-#include "Extension/H264.h"
 
 namespace mediakit {
 
@@ -24,17 +25,22 @@ TsMuxer::~TsMuxer() {
     uninit();
 }
 
-void TsMuxer::stampSync(){
+void TsMuxer::stampSync() {
     if (_codec_to_trackid.size() < 2) {
         return;
     }
 
     Stamp *audio = nullptr, *video = nullptr;
     for (auto &pr : _codec_to_trackid) {
-        switch (getTrackType((CodecId) pr.first)) {
-            case TrackAudio : audio = &pr.second.stamp; break;
-            case TrackVideo : video = &pr.second.stamp; break;
-            default : break;
+        switch (getTrackType((CodecId)pr.first)) {
+            case TrackAudio:
+                audio = &pr.second.stamp;
+                break;
+            case TrackVideo:
+                video = &pr.second.stamp;
+                break;
+            default:
+                break;
         }
     }
 
@@ -78,7 +84,9 @@ void TsMuxer::addTrack(const Track::Ptr &track) {
             break;
         }
 
-        default: WarnL << "mpeg-ts 不支持该编码格式,已忽略:" << track->getCodecName(); break;
+        default:
+            WarnL << "mpeg-ts 不支持该编码格式,已忽略:" << track->getCodecName();
+            break;
     }
 
     //尝试音视频同步
@@ -93,9 +101,9 @@ void TsMuxer::inputFrame(const Frame::Ptr &frame) {
     auto &track_info = it->second;
     int64_t dts_out, pts_out;
     _is_idr_fast_packet = !_have_video;
-    switch (frame->getCodecId()){
+    switch (frame->getCodecId()) {
         case CodecH264: {
-            int type = H264_TYPE(*((uint8_t *) frame->data() + frame->prefixSize()));
+            int type = H264_TYPE(*((uint8_t *)frame->data() + frame->prefixSize()));
             if (type == H264Frame::NAL_SEI) {
                 break;
             }
@@ -125,7 +133,7 @@ void TsMuxer::inputFrame(const Frame::Ptr &frame) {
                 track_info.stamp.revise(back->dts(), back->pts(), dts_out, pts_out);
                 //取视频时间戳为TS的时间戳
                 _timestamp = dts_out;
-                mpeg_ts_write(_context, track_info.track_id, back->keyFrame() ? 0x0001 : 0, pts_out * 90LL,dts_out * 90LL, merged_frame->data(), merged_frame->size());
+                mpeg_ts_write(_context, track_info.track_id, back->keyFrame() ? 0x0001 : 0, pts_out * 90LL, dts_out * 90LL, merged_frame->data(), merged_frame->size());
                 _frameCached.clear();
             }
             _frameCached.emplace_back(Frame::getCacheAbleFrame(frame));
@@ -141,7 +149,7 @@ void TsMuxer::inputFrame(const Frame::Ptr &frame) {
 
         default: {
             track_info.stamp.revise(frame->dts(), frame->pts(), dts_out, pts_out);
-            if(!_have_video){
+            if (!_have_video) {
                 //没有视频时，才以音频时间戳为TS的时间戳
                 _timestamp = dts_out;
             }
@@ -161,21 +169,20 @@ void TsMuxer::resetTracks() {
 
 void TsMuxer::init() {
     static mpeg_ts_func_t s_func = {
-            [](void *param, size_t bytes) {
-                TsMuxer *muxer = (TsMuxer *) param;
-                assert(sizeof(TsMuxer::_tsbuf) >= bytes);
-                return (void *) muxer->_tsbuf;
-            },
-            [](void *param, void *packet) {
-                //do nothing
-            },
-            [](void *param, const void *packet, size_t bytes) {
-                TsMuxer *muxer = (TsMuxer *) param;
-                muxer->onTs(packet, bytes, muxer->_timestamp, muxer->_is_idr_fast_packet);
-                muxer->_is_idr_fast_packet = false;
-                return 0;
-            }
-    };
+        [](void *param, size_t bytes) {
+            TsMuxer *muxer = (TsMuxer *)param;
+            assert(sizeof(TsMuxer::_tsbuf) >= bytes);
+            return (void *)muxer->_tsbuf;
+        },
+        [](void *param, void *packet) {
+            //do nothing
+        },
+        [](void *param, const void *packet, size_t bytes) {
+            TsMuxer *muxer = (TsMuxer *)param;
+            muxer->onTs(packet, bytes, muxer->_timestamp, muxer->_is_idr_fast_packet);
+            muxer->_is_idr_fast_packet = false;
+            return 0;
+        }};
     if (_context == nullptr) {
         _context = mpeg_ts_create(&s_func, this);
     }
@@ -189,5 +196,5 @@ void TsMuxer::uninit() {
     _codec_to_trackid.clear();
 }
 
-}//namespace mediakit
-#endif// defined(ENABLE_HLS)
+}  //namespace mediakit
+#endif  // defined(ENABLE_HLS)

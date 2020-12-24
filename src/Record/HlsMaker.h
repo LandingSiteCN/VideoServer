@@ -13,17 +13,18 @@
 
 #include <deque>
 #include <tuple>
+
 #include "Common/config.h"
-#include "Util/TimeTicker.h"
 #include "Util/File.h"
-#include "Util/util.h"
+#include "Util/TimeTicker.h"
 #include "Util/logger.h"
+#include "Util/util.h"
 using namespace toolkit;
 
 namespace mediakit {
 
 class HlsMaker {
-public:
+   public:
     /**
      * @param seg_duration 切片文件长度
      * @param seg_number 切片个数
@@ -50,7 +51,7 @@ public:
      */
     void clear();
 
-protected:
+   protected:
     /**
      * 创建ts切片文件回调
      * @param index
@@ -72,6 +73,11 @@ protected:
     virtual void onWriteSegment(const char *data, int len) = 0;
 
     /**
+     * 写切边索引文件回调
+     */
+    virtual void onWriteSegIndex(const char *data, int len) = 0;
+
+    /**
      * 写m3u8文件回调
      * @param data
      * @param len
@@ -82,7 +88,7 @@ protected:
      * 上一个 ts 切片写入完成, 可在这里进行通知处理
      * @param duration_ms 上一个 ts 切片的时长, 单位为毫秒
      */
-    virtual void onFlushLastSegment(uint32_t duration_ms) {};
+    virtual void onFlushLastSegment(uint32_t duration_ms){};
 
     /**
      * 关闭上个ts切片并且写入m3u8索引
@@ -90,17 +96,12 @@ protected:
      */
     void flushLastSegment(bool eof);
 
-private:
+   private:
     /**
-     * 生成m3u8文件
-     * @param eof true代表点播
+     * 更新切片索引
+     * 
      */
-    void makeIndexFile(bool eof = false);
-
-    /**
-     * 删除旧的ts切片
-     */
-    void delOldSegment();
+    void updateSegIndex();
 
     /**
      * 添加新的ts切片
@@ -108,15 +109,19 @@ private:
      */
     void addNewSegment(uint32_t timestamp);
 
-private:
+   private:
+    uint32_t _last_data_len = 0;
     float _seg_duration = 0;
     uint32_t _seg_number = 0;
     uint32_t _last_timestamp = 0;
+    uint32_t _last_idr_pos = 0;
+    uint32_t _last_idr_timestamp = 0;
     uint32_t _last_seg_timestamp = 0;
     uint64_t _file_index = 0;
+    string _current_hour;
     string _last_file_name;
-    std::deque<tuple<int,string> > _seg_dur_list;
+    std::deque<tuple<int, string> > _seg_dur_list;
 };
 
-}//namespace mediakit
-#endif //HLSMAKER_H
+}  //namespace mediakit
+#endif  //HLSMAKER_H
